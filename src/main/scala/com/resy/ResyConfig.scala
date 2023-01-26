@@ -9,6 +9,8 @@ final case class ReservationDetails(
   resTimeTypes: Seq[ReservationTimeType]
 )
 
+final case class BufferDays(days: Int)
+
 final case class ReservationTimeType(reservationTime: String, tableType: Option[String] = None)
 
 object ReservationTimeType {

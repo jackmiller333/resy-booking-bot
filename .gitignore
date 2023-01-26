@@ -21,3 +21,6 @@ project/target/
 .idea
 .scala_dependencies
 .worksheet
+
+# Env
+.env

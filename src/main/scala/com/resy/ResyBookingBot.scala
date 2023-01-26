@@ -13,16 +13,15 @@ import scala.language.postfixOps
 object ResyBookingBot extends Logging {
 
   def main(args: Array[String]): Unit = {
-    logger.info("Starting Resy Booking Bot")
+    logger.info("Starting Resy Booking Bot") 
 
-    val resyConfig = ConfigSource.resources("resyConfig.conf")
+    val resyConfig = 
+      if (args.length == 0) ConfigSource.resources("resyConfig.conf")
+      else ConfigSource.resources(args(0))
+    val bufferDays = resyConfig.at("bufferDays").loadOrThrow[BufferDays]
     val resyKeys   = resyConfig.at("resyKeys").loadOrThrow[ResyKeys]
     val resDetails = resyConfig.at("resDetails").loadOrThrow[ReservationDetails]
-    val snipeTime  = resyConfig.at("snipeTime").loadOrThrow[SnipeTime]
-
-    val resyApi             = new ResyApi(resyKeys)
-    val resyClient          = new ResyClient(resyApi)
-    val resyBookingWorkflow = new ResyBookingWorkflow(resyClient, resDetails)
+    val snipeTime  = resyConfig.at("snipeTime").loadOrThrow[SnipeTime]  
 
     val system      = ActorSystem("System")
     val dateTimeNow = DateTime.now
@@ -42,10 +41,25 @@ object ResyBookingBot extends Logging {
     val secondsRemaining =
       millisUntilTomorrow / 1000 - hoursRemaining * 60 * 60 - minutesRemaining * 60
 
+    val reserveDate = dateTimeNow.plusDays(bufferDays.days).toString("YYYY-MM-dd")
+
+    val newResDetails   = ReservationDetails(
+      reserveDate,
+      resDetails.partySize,
+      resDetails.venueId,
+      resDetails.resTimeTypes
+    )
+
+    logger.info(s"Attempting to get a reservation on $reserveDate")
+
     logger.info(s"Next snipe time: $nextSnipeTime")
     logger.info(
       s"Sleeping for $hoursRemaining hours, $minutesRemaining minutes, and $secondsRemaining seconds"
     )
+
+    val resyApi             = new ResyApi(resyKeys)
+    val resyClient          = new ResyClient(resyApi)
+    val resyBookingWorkflow = new ResyBookingWorkflow(resyClient, newResDetails)
 
     system.scheduler.scheduleOnce(millisUntilTomorrow millis) {
       resyBookingWorkflow.run()
