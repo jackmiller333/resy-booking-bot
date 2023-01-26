@@ -18,8 +18,11 @@ object ResyBookingBot extends Logging {
     val resyConfig = 
       if (args.length == 0) ConfigSource.resources("resyConfig.conf")
       else ConfigSource.resources(args(0))
+    val keysConfig =
+      if (args.length < 2) ConfigSource.resources("main.env")
+      else ConfigSource.resources(args(1))
     val bufferDays = resyConfig.at("bufferDays").loadOrThrow[BufferDays]
-    val resyKeys   = resyConfig.at("resyKeys").loadOrThrow[ResyKeys]
+    val resyKeys   = keysConfig.at("resyKeys").loadOrThrow[ResyKeys]
     val resDetails = resyConfig.at("resDetails").loadOrThrow[ReservationDetails]
     val snipeTime  = resyConfig.at("snipeTime").loadOrThrow[SnipeTime]  
 
