@@ -25,6 +25,9 @@ object ResyBookingBot extends Logging {
     val resyKeys   = keysConfig.at("resyKeys").loadOrThrow[ResyKeys]
     val resDetails = resyConfig.at("resDetails").loadOrThrow[ReservationDetails]
     val snipeTime  = resyConfig.at("snipeTime").loadOrThrow[SnipeTime]  
+    val tableSize  = 
+      if (args.length == 3) args(2).toInt
+      else resDetails.partySize
 
     val system      = ActorSystem("System")
     val dateTimeNow = DateTime.now
@@ -48,13 +51,14 @@ object ResyBookingBot extends Logging {
 
     val newResDetails   = ReservationDetails(
       reserveDate,
-      resDetails.partySize,
+      tableSize,
       resDetails.venueId,
       resDetails.resTimeTypes
     )
 
-    logger.info(s"Attempting to get a reservation on $reserveDate")
-
+    logger.info(s"Attempting to get a reservation on $reserveDate for $tableSize")
+    logger.info(newResDetails
+    )
     logger.info(s"Next snipe time: $nextSnipeTime")
     logger.info(
       s"Sleeping for $hoursRemaining hours, $minutesRemaining minutes, and $secondsRemaining seconds"
